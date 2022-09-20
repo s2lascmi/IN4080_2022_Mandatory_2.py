@@ -42,6 +42,7 @@
 import random
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
+import statistics
 
 
 
@@ -579,25 +580,25 @@ def vectorizer_lr(boolean, range, train_texts, train_target, dev_test_texts):
 
 
 """Settings: Logistic Regression, binary=True, ngram_range=(1,2)"""
-# scorecard = []
-# for i in range(0, len(list_of_texts)):
-#     preparation = n_folding(i, list_of_texts, list_of_targets)
-#
-#     dev_test_texts = preparation[0]
-#     dev_test_target = preparation[1]
-#     train_texts = preparation[2]
-#     train_target = preparation[3]
-#
-#     result = vectorizer_lr(True, (1,2), train_texts, train_target, dev_test_texts)
-#     dev_test_vectors = result[1]
-#     clf = result[0]
-#     scorecard.append(clf.score(dev_test_vectors, dev_test_target))
-#
-#
-# print("True + (1,2) + Logistic Regression", "\n", scorecard) #[0.875, 0.865, 0.89, 0.85, 0.885, 0.87, 0.89, 0.855, 0.885]
-# mean = sum(scorecard) / len(scorecard)
-# print("Mean: ", mean) #0.87
-# print("Standard Deviation: ", statistics.stdev(scorecard)) #0.01
+scorecard = []
+for i in range(0, len(list_of_texts)):
+    preparation = n_folding(i, list_of_texts, list_of_targets)
+
+    dev_test_texts = preparation[0]
+    dev_test_target = preparation[1]
+    train_texts = preparation[2]
+    train_target = preparation[3]
+
+    result = vectorizer_lr(True, (1,2), train_texts, train_target, dev_test_texts)
+    dev_test_vectors = result[1]
+    clf = result[0]
+    scorecard.append(clf.score(dev_test_vectors, dev_test_target))
+
+
+print("True + (1,2) + Logistic Regression", "\n", scorecard) #[0.875, 0.865, 0.89, 0.85, 0.885, 0.87, 0.89, 0.855, 0.885]
+mean = sum(scorecard) / len(scorecard)
+print("Mean: ", mean) #0.87
+print("Standard Deviation: ", statistics.stdev(scorecard)) #0.01
 
 
 
