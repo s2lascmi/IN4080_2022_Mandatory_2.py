@@ -29,22 +29,20 @@
 # 
 # If you have any questions regarding these two tutorials, we will be happy to answer them during the group/lab sessions.
 
-# ## Ex 1 First classifier and vectorization (10 points)
-# ### 1a) Inititial classifier
+
+""" Ex 1 First classifier and vectorization (10 points) """
+""" 1a) Initial classifier """
+
 # We will work interactively in python/ipython/Jupyter notebook. Start by importing the tools we will be using:
 
 # In[ ]:
 
 
-import nltk
+
 import random
-import numpy as np
-import scipy as sp
-import sklearn
-from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
-import statistics
+
 
 
 # As data we will use the Movie Reviews Corpus that comes with NLTK.
@@ -109,7 +107,6 @@ train_texts = []
 train_target = []
 for item in train_data:
     (reviews, labels) = item
-    #print("REVIEW: " ,reviews)
     train_texts.append(reviews)
     train_target.append(labels)
 
@@ -185,7 +182,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 # Congratulations! You have now made and tested a multinomial naive Bayes text classifier.
 
-# ### 1b) Parameters of the vectorizer 
+"""1b) Parameters of the vectorizer"""
 # We have so far considered the standard parameters for the procedures from scikit-learn.
 # These procedures have, however, many parameters. To get optimal results, we should adjust the parameters.
 # We can use *train_data* for training various models and *dev_test_data* for testing and comparing them.
@@ -304,8 +301,8 @@ Result Accuracy: 0.86"""
 
 
 
-# ## Ex 2 *n*-fold cross-validation (12 points)
-# ### 2a) 
+""" Ex 2 *n*-fold cross-validation (12 points) """
+""" 2a) """
 # Our *dev_test_data* contains only 200 items. That is a small number for a test set for a binary classifier.
 # The numbers we report may depend to a large degree on the split between training and test data.
 # To get more reliable numbers, we may use *n*-gram cross-validation. We can use the whole *dev_test_data* of 1800
@@ -327,6 +324,7 @@ def divide_chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
+
 def vectorizer(boolean, range, train_texts, train_target, dev_test_texts):
     v = CountVectorizer(binary=boolean, ngram_range=range)
     v.fit(train_texts)
@@ -338,6 +336,7 @@ def vectorizer(boolean, range, train_texts, train_target, dev_test_texts):
     clf.fit(train_vectors, train_target)
 
     return clf, dev_test_vectors
+
 
 def n_folding(i, list_of_texts, list_of_targets):
     excluded_index = i
@@ -358,6 +357,7 @@ def n_folding(i, list_of_texts, list_of_targets):
         train_target = train_target + n_fold_targets[i]
 
     return dev_test_texts, dev_test_target, train_texts, train_target
+
 
 random.seed(1009)
 random.shuffle(movie_dev)
@@ -399,13 +399,14 @@ list_of_targets = list(divide_chunks(cv_target, 200))
 
 
 
-# ### 2b)
+"""2b)"""
 # The large variation we see between the results, raises a question regarding whether the optimal settings we found
 # in exercise 1, would also be optimal for another split between training and test.
 # 
 # To find out, we combine the 9-fold cross-validation with the various settings for CountVectorizer.
 # For each of the 6 settings, run 9-fold cross-validation and calculate the mean accuracy.
 # Report the results in a 2x3 table. Answer: Do you see the same as when you only used one test set?
+
 
 """Settings: binary=False, ngram_range=(1,3)"""
 # scorecard = []
@@ -523,7 +524,9 @@ list_of_targets = list(divide_chunks(cv_target, 200))
 
 
 
-# ## Ex 3  Logistic Regression (8 points)
+
+
+"""Ex 3  Logistic Regression (8 points)"""
 
 # We know that Logistic Regression may produce better results than Naive Bayes. We will see what happens if we use
 # Logistic Regression instead of Naive Bayes on this task.
@@ -573,6 +576,7 @@ def vectorizer_lr(boolean, range, train_texts, train_target, dev_test_texts):
 # mean = sum(scorecard) / len(scorecard)
 # print("Mean: ", mean) #0.84
 # print("Standard Deviation: ", statistics.stdev(scorecard)) #0.03
+
 
 """Settings: Logistic Regression, binary=True, ngram_range=(1,2)"""
 # scorecard = []
