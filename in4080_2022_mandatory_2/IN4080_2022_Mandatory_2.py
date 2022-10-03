@@ -52,11 +52,17 @@
 # - evaluation
 # - in-domain and out-of-domain evaluation
 # 
-# To get a good tagger, you need a reasonably sized tagged training corpus. Ideally, we would have used the complete Brown corpus in this exercise, but it turns out that some of the experiments we will run, will be time-consuming. Hence, we will follow the NLTK book and use only the News section initially. Since this is a rather homogeneous domain, and we also pick our test data from the same domain, we can still get decent results.
+# To get a good tagger, you need a reasonably sized tagged training corpus. Ideally, we would have used the complete
+# Brown corpus in this exercise, but it turns out that some of the experiments we will run, will be time-consuming.
+# Hence, we will follow the NLTK book and use only the News section initially. Since this is a rather homogeneous domain,
+# and we also pick our test data from the same domain, we can still get decent results.
 # 
-# In the last half of the assigment, we will see what happens if we take our best settings from the News section to a bigger corpus.
+# In the last half of the assigment, we will see what happens if we take our best settings from the
+# News section to a bigger corpus.
 # 
-# Beware that even with this reduced corpus, some of the experiments will take several minutes. And when we build the full tagger in exercise 5, an experiment may take half an hour. So make sure you start the work early enough. (You might do other things while the experiments are running.)
+# Beware that even with this reduced corpus, some of the experiments will take several minutes.
+# And when we build the full tagger in exercise 5, an experiment may take half an hour.
+# So make sure you start the work early enough. (You might do other things while the experiments are running.)
 
 # ### Replicating NLTK Ch. 6 
 # 
@@ -99,7 +105,7 @@ train_sents, test_sents = tagged_sents[size:], tagged_sents[:size]
 def pos_features(sentence, i, history): 
     features = {"suffix(1)": sentence[i][-1:],
                 "suffix(2)": sentence[i][-2:],
-                "suffix(3)": sentence[i][-3:]}
+                "suffix(3)": sentence[i][-3:],}
     if i == 0:
         features["prev-word"] = "<START>"
     else:
@@ -172,7 +178,7 @@ size1 = int(len(tagged_sents_univ) * 0.1)
 size2 = int(len(tagged_sents_univ) * 0.2)
 news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_univ[:size1], tagged_sents_univ[size1:size2]
 
-tagger = ConsecutivePosTagger(news_train)
+# tagger = ConsecutivePosTagger(news_train)
 #print(round(tagger.accuracy(news_dev_test), 4))
 
 # # result: 0.8689
@@ -252,7 +258,7 @@ class ScikitConsecutivePosTagger(nltk.TaggerI):
 # *pos_features*. Do you get the same result as with the same data and features and the NLTK code in exercise 1a?
 
 
-tagger = ScikitConsecutivePosTagger(news_train)
+# tagger = ScikitConsecutivePosTagger(news_train)
 #print(round(tagger.accuracy(news_dev_test), 4))
 ## result: 0.857
 
@@ -268,33 +274,21 @@ tagger = ScikitConsecutivePosTagger(news_train)
 # exercise 1a, worse results or better results?
 
 """ BernoulliNB(alpha=1) """
-tagger = ScikitConsecutivePosTagger(news_train)
-# print(round(tagger.accuracy(news_dev_test), 4))
 ## result: 0.857
 
 """ BernoulliNB(alpha=0.5) """
-tagger = ScikitConsecutivePosTagger(news_train)
-# print(round(tagger.accuracy(news_dev_test), 4))
 ## result: 0.8749
 
 """ BernoulliNB(alpha=0.1) """
-tagger = ScikitConsecutivePosTagger(news_train)
-# print(round(tagger.accuracy(news_dev_test), 4))
 ## result: 0.8695
 
 """ BernoulliNB(alpha=0.01) """
-tagger = ScikitConsecutivePosTagger(news_train)
-# print(round(tagger.accuracy(news_dev_test), 4))
 ## result: 0.8683
 
 """ BernoulliNB(alpha=0.001) """
-tagger = ScikitConsecutivePosTagger(news_train)
-# print(round(tagger.accuracy(news_dev_test), 4))
 ## result: 0.8651
 
 """ BernoulliNB(alpha=0.0001) """
-tagger = ScikitConsecutivePosTagger(news_train)
-# print(round(tagger.accuracy(news_dev_test), 4)
 ## result: 0.8631
 
 
@@ -302,35 +296,374 @@ tagger = ScikitConsecutivePosTagger(news_train)
 
 
 # ### Part c.
-# To improve the results, we may change the feature selector or the machine learner. We start with a simple improvement of the feature selector. The NLTK selector considers the previous word, but not the word itself. Intuitively, the word itself should be a stronger feature. Extend the NLTK feature selector with a feature for the token to be tagged. Rerun the experiment with various alphas and record the results. Which alpha gives the best accuracy and what is the accuracy?
+# To improve the results, we may change the feature selector or the machine learner.
+# We start with a simple improvement of the feature selector. The NLTK selector considers the previous word,
+# but not the word itself. Intuitively, the word itself should be a stronger feature.
+# Extend the NLTK feature selector with a feature for the token to be tagged.
+# Rerun the experiment with various alphas and record the results. Which alpha gives the best accuracy
+# and what is the accuracy?
 # 
-# Did the extended feature selector beat the baseline? Intuitively, it should get as least as good accuracy as the baseline. Explain why!
+# Did the extended feature selector beat the baseline? Intuitively, it should get as least as good accuracy
+# as the baseline. Explain why!
+
+import numpy as np
+import sklearn
+
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction import DictVectorizer
+
+def pos_features_ext(sentence, i, history):
+    features = {"suffix(1)": sentence[i][-1:],
+                "suffix(2)": sentence[i][-2:],
+                "suffix(3)": sentence[i][-3:],
+                "word itself": sentence[i]}
+    if i == 0:
+        features["prev-word"] = "<START>"
+    else:
+        features["prev-word"] = sentence[i-1]
+    return features
+
+
+class ScikitConsecutivePosTagger(nltk.TaggerI):
+
+    def __init__(self, train_sents,
+                 features=pos_features_ext, clf = BernoulliNB(alpha=1)):
+        # Using pos_features as default.
+        self.features = features
+        train_features = []
+        train_labels = []
+        for tagged_sent in train_sents:
+            history = []
+            untagged_sent = nltk.tag.untag(tagged_sent)
+            for i, (word, tag) in enumerate(tagged_sent):
+                featureset = features(untagged_sent, i, history)
+                train_features.append(featureset)
+                train_labels.append(tag)
+                history.append(tag)
+        v = DictVectorizer()
+        X_train = v.fit_transform(train_features)
+        y_train = np.array(train_labels)
+        clf.fit(X_train, y_train)
+        self.classifier = clf
+        self.dict = v
+
+    def tag(self, sentence):
+        test_features = []
+        history = []
+        for i, word in enumerate(sentence):
+            featureset = self.features(sentence, i, history)
+            test_features.append(featureset)
+        X_test = self.dict.transform(test_features)
+        tags = self.classifier.predict(X_test)
+        return zip(sentence, tags)
+
+
+
+# tagger = ScikitConsecutivePosTagger(news_train)
+# print(round(tagger.accuracy(news_dev_test), 4))
+
+""" BernoulliNB(alpha=1) """
+## result: 0.8874
+
+""" BernoulliNB(alpha=0.5) """
+## result: 0.9166
+
+""" BernoulliNB(alpha=0.1) """
+## result: 0.9244
+
+""" BernoulliNB(alpha=0.01) """
+## result: 0.9303
+
+""" BernoulliNB(alpha=0.001) """
+## result: 0.933
+
+""" BernoulliNB(alpha=0.0001) """
+## result: 0.934
+
 
 # ## Ex 3: Logistic regression (10 points)
 # ### Part a.
-# We proceed with the best feature selector from the last exercise. We will study the effect of the learner. Import *LogisticRegression* and use it with standard settings instead of *BernoulliNB*. Train on *news_train* and test on *news_dev_test* and record the result. Is it better than the best result with Naive Bayes? 
+# We proceed with the best feature selector from the last exercise.
+# We will study the effect of the learner. Import *LogisticRegression* and use it with standard settings
+# instead of *BernoulliNB*. Train on *news_train* and test on *news_dev_test* and record the result.
+# Is it better than the best result with Naive Bayes?
+
+import numpy as np
+import sklearn
+
+
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction import DictVectorizer
+
+def pos_features_ext(sentence, i, history):
+    features = {"suffix(1)": sentence[i][-1:],
+                "suffix(2)": sentence[i][-2:],
+                "suffix(3)": sentence[i][-3:],
+                "word itself": sentence[i]}
+    if i == 0:
+        features["prev-word"] = "<START>"
+    else:
+        features["prev-word"] = sentence[i-1]
+    return features
+
+
+class ScikitConsecutivePosTagger(nltk.TaggerI):
+
+    def __init__(self, train_sents,
+                 features=pos_features_ext, clf = LogisticRegression(C=1000.0)):
+        # Using pos_features as default.
+        self.features = features
+        train_features = []
+        train_labels = []
+        for tagged_sent in train_sents:
+            history = []
+            untagged_sent = nltk.tag.untag(tagged_sent)
+            for i, (word, tag) in enumerate(tagged_sent):
+                featureset = features(untagged_sent, i, history)
+                train_features.append(featureset)
+                train_labels.append(tag)
+                history.append(tag)
+        v = DictVectorizer()
+        X_train = v.fit_transform(train_features)
+        y_train = np.array(train_labels)
+        clf.fit(X_train, y_train)
+        self.classifier = clf
+        self.dict = v
+
+    def tag(self, sentence):
+        test_features = []
+        history = []
+        for i, word in enumerate(sentence):
+            featureset = self.features(sentence, i, history)
+            test_features.append(featureset)
+        X_test = self.dict.transform(test_features)
+        tags = self.classifier.predict(X_test)
+        return zip(sentence, tags)
+
+
+
+# tagger = ScikitConsecutivePosTagger(news_train)
+# print(round(tagger.accuracy(news_dev_test), 4))
+## result with standard settings: 0.9514
+
+
 
 # ### Part b.
 # Similarly to the Naive Bayes classifier, we will study the effect of smoothing. Smoothing for LogisticRegression is done by regularization. In scikit-learn, regularization is expressed by the parameter C. A smaller C means a heavier smoothing. (C is the inverse of the parameter $\alpha$ in the lectures.) Try with C in [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0] and see which value which yields the best result.
 # 
 # Which C gives the best result?
 
+""" LogisticRegression(C=0.01)) """
+## result: 0.8499
+
+""" LogisticRegression(C=0.1)) """
+## result: 0.9265
+
+""" LogisticRegression(C=1.0)) """
+## result: 0.9514
+
+""" LogisticRegression(C=10.0)) """
+## result: 0.9545
+
+""" LogisticRegression(C=100.0)) """
+## result: 0.9531
+
+""" LogisticRegression(C=1000.0)) """
+## result: 0.954
+
 # #### Deliveries:
 # Code. Results of the runs. Answers to the questions.
+
+
 
 # ## Ex 4: Features (15 points)
 # ### Part a.
-# We will now stick to the *LogisticRegression()* with the optimal C from the last point and see whether we are able to improve the results further by extending the feature extractor with more features. First, try adding a feature for the next word in the sentence, and then train and test.
+# We will now stick to the *LogisticRegression()* with the optimal C from the last point and see
+# whether we are able to improve the results further by extending the feature extractor with more features.
+# First, try adding a feature for the next word in the sentence, and then train and test.
+
+import numpy as np
+import sklearn
+
+
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction import DictVectorizer
+
+def pos_features_next(sentence, i, history):
+    features = {"suffix(1)": sentence[i][-1:],
+                "suffix(2)": sentence[i][-2:],
+                "suffix(3)": sentence[i][-3:],
+                "word itself": sentence[i]}
+    if i == 0:
+        features["prev-word"] = "<START>"
+    else:
+        features["prev-word"] = sentence[i-1]
+
+    if i == (len(sentence)-1):
+        features["next word"] = "<END>"
+    else:
+        features["next word"] = sentence[i+1]
+
+    return features
+
+
+class ScikitConsecutivePosTagger(nltk.TaggerI):
+
+    def __init__(self, train_sents,
+                 features=pos_features_next, clf = LogisticRegression(C=10.0)):
+        # Using pos_features as default.
+        self.features = features
+        train_features = []
+        train_labels = []
+        for tagged_sent in train_sents:
+            history = []
+            untagged_sent = nltk.tag.untag(tagged_sent)
+            for i, (word, tag) in enumerate(tagged_sent):
+                featureset = features(untagged_sent, i, history)
+                train_features.append(featureset)
+                train_labels.append(tag)
+                history.append(tag)
+        v = DictVectorizer()
+        X_train = v.fit_transform(train_features)
+        y_train = np.array(train_labels)
+        clf.fit(X_train, y_train)
+        self.classifier = clf
+        self.dict = v
+
+    def tag(self, sentence):
+        test_features = []
+        history = []
+        for i, word in enumerate(sentence):
+            featureset = self.features(sentence, i, history)
+            test_features.append(featureset)
+        X_test = self.dict.transform(test_features)
+        tags = self.classifier.predict(X_test)
+        return zip(sentence, tags)
+
+
+
+# tagger = ScikitConsecutivePosTagger(news_train)
+# print(round(tagger.accuracy(news_dev_test), 4))
+## result with added feature (next word) and best C from Ex3: 0.9651
+
+
 
 # ### Part b.
-# Try to add more features to get an even better tagger. Only the fantasy sets limits to what you may consider. Some candidates: is the word a number? Is it capitalized? Does it contain capitals? Does it contain a hyphen? Consider larger contexts? etc. What is the best feature set you can come up with? Train and test various feature sets and select the best one. 
+# Try to add more features to get an even better tagger.
+# Only the fantasy sets limits to what you may consider.
+# Some candidates: is the word a number? Is it capitalized?
+# Does it contain capitals? Does it contain a hyphen? Consider larger contexts? etc.
+# What is the best feature set you can come up with? Train and test various feature sets and select the best one.
 # 
-# If you use sources for finding tips about good features (like articles, web pages, NLTK code, etc.) make references to the sources and explain what you got from them.
+# If you use sources for finding tips about good features (like articles, web pages, NLTK code, etc.)
+# make references to the sources and explain what you got from them.
 # 
-# Observe that the way *ScikitConsecutivePosTagger.tag()* is written, it extracts the features from a whole sentence before it tags it. Hence it does not support  preceding tags as features. It is possible to rewrite *ScikitConsecutivePosTagger.tag()* to extract features after reading each word, and to use the *history* which keeps the preceding tags in the sentence. If you like, you may try it. Expect, however, that the tagger will becomr much slower. We got surprisingly little gain from including preceding tags as features, and you are not requested to trying it.
+# Observe that the way *ScikitConsecutivePosTagger.tag()* is written, it extracts the features
+# from a whole sentence before it tags it. Hence it does not support  preceding tags as features.
+# It is possible to rewrite *ScikitConsecutivePosTagger.tag()* to extract features after reading each word,
+# and to use the *history* which keeps the preceding tags in the sentence. If you like, you may try it.
+# Expect, however, that the tagger will become much slower. We got surprisingly little gain from including preceding
+# tags as features, and you are not requested to trying it.
+
+
+import numpy as np
+import sklearn
+
+
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction import DictVectorizer
+
+def pos_features_all(sentence, i, history):
+    features = {"suffix(1)": sentence[i][-1:],
+                "suffix(2)": sentence[i][-2:],
+                "suffix(3)": sentence[i][-3:],
+                "word itself": sentence[i]}
+    if i == 0:
+        features["prev-word"] = "<START>"
+    else:
+        features["prev-word"] = sentence[i-1]
+
+    if i == (len(sentence)-1):
+        features["next word"] = "<END>"
+    else:
+        features["next word"] = sentence[i+1]
+
+    # if sentence[i].isnumeric() == True:
+    #     features["numeric"] = "NUMERIC"
+    # else:
+    #     features["numeric"] = "NOT NUMERIC"
+    #
+    # if sentence[i].isupper() == True:
+    #     features["uppercase"] = "UPPER"
+    # else:
+    #     features["uppercase"] = "NOT UPPERCASE"
+
+    if sentence[i].isupper() == True:
+        features["uppercase"] = "UPPER"
+    else:
+        if sentence[i][0].isupper
+        features["uppercase"] = "NOT UPPERCASE"
+
+    return features
+
+
+class ScikitConsecutivePosTagger(nltk.TaggerI):
+
+    def __init__(self, train_sents,
+                 features=pos_features_all, clf = LogisticRegression(C=10.0)):
+        # Using pos_features as default.
+        self.features = features
+        train_features = []
+        train_labels = []
+        for tagged_sent in train_sents:
+            history = []
+            untagged_sent = nltk.tag.untag(tagged_sent)
+            for i, (word, tag) in enumerate(tagged_sent):
+                featureset = features(untagged_sent, i, history)
+                train_features.append(featureset)
+                train_labels.append(tag)
+                history.append(tag)
+        v = DictVectorizer()
+        X_train = v.fit_transform(train_features)
+        y_train = np.array(train_labels)
+        clf.fit(X_train, y_train)
+        self.classifier = clf
+        self.dict = v
+
+    def tag(self, sentence):
+        test_features = []
+        history = []
+        for i, word in enumerate(sentence):
+            featureset = self.features(sentence, i, history)
+            test_features.append(featureset)
+        X_test = self.dict.transform(test_features)
+        tags = self.classifier.predict(X_test)
+        return zip(sentence, tags)
+
+
+
+tagger = ScikitConsecutivePosTagger(news_train)
+print(round(tagger.accuracy(news_dev_test), 4))
+
+""" Feature extractor containing i.isnumeric() and previous settings"""
+## result: 0.9658
+
+""" Feature extractor containing i.isupper() and previous settings (i.e. is word capitalized?)"""
+## result: 0.9646
+
+""" Feature extractor combining the previous two settings"""
+## result: 0.9646
+
 
 # #### Deliveries:
 # Code. Results of the runs. Answers to the questions.
+
+
+
 
 # ## Ex 5: Training on a larger corpus (15 points)
 # ### Part a.
