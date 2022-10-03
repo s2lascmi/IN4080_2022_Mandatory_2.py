@@ -1,0 +1,150 @@
+############ Part 1 ############
+Exercise 1: 
+
+Precision: tp / tp + fp (tp / predicted positives)
+Recall: tp / tp + fn (tp / real positives)
+Accuracy: tp + tn / all instances (how many instances were classified correctly?)
+F-score: 2*(P*R) / P+R
+
+
+a) Accuracy of the classifier: 
+	50 + 750 / 50 + 50 + 150 + 750 = 800/1000 = 80%
+
+b) Recall, Precision and f-score of sentiment-bearing class?
+	Precision: 50 / 50 + 50 = 50/100 = 50%
+	Recall: 50 / 50 + 150 = 50/200 = 25%
+	F-Score: 0.333
+
+c) Recall, precision and f-score of non-sentiment-bearing class?
+	Precision: 750 / 750 + 150 = 750/900 = 0.83333 = 83%
+	Recall: 750 / 750 + 50 = 750/800 = 0.9375 = 93.75%
+	F-Score: 0.88
+
+
+
+Exercise 3:
+a) Person: P, R, F
+	Precision: 720 / 720 + 180 = 0.8 = 80%
+	Recall: 720 / 720 + 80 = 0.9 = 90%
+	F-Score: 0.847
+
+Organization: P, R, F
+	Precision: 180 / 180 + 20 = 0.9 = 90%
+	Recall: 180 / 180 + 60 = 0.75 = 75%
+	F-Score: 0.818
+
+Location: P, R, F
+	Precision: 60 / 60 + 0 = 1
+	Recall: 60 / 60 + 20 = 60/80 = 0.75
+	F-Score: 0.857
+
+b) Macro- and Micro-averaged P, R, F
+
+Microaverage: 
+	tp (von allen Klassen): 720 + 180 + 60 = 960
+	fp (von allen klassen): 180 + 20 + 0 = 200
+	fn (von allen Klassen): 80 + 60 + 20 = 160
+
+	P = 960 / 960 + 200 = 0.828
+	R = 960 / 960 + 160 = 0.857
+	F = 2*0.828*0.857 / 0.828+0.857 = 0.842
+
+ 
+Macroaverage:
+	Precision: 0.8 + 0.9 + 1.0 / 3 = 0.9
+	Recall: 0.9 + 0.75 + 0.775 / 3 = 0.8
+	F-Score: 0.847 + 0.818 + 0.857 / 3 = 0.841
+
+
+
+
+
+############ Part 2 ############
+<s>This film is funny.</s>
+<s>I enjoyed the book.</s>
+<s>The film was entertaining.</s>
+<s>The book is good.</s>
+<s>The game is not bad.</s>
+<s>It is not boring.</s>
+<s>This is a good book.</s>
+
+Exercise 1:
+<s>The film is good.</s>
+
+	Bigrams and their probabilities:
+
+	P(The | <s>) / P(x | <s>) = 3/7
+	P(film | The) / / P(x | The) = 1/4 
+	P(is | film) / P(x | film) = 1/2
+	P(good | is) / P(x | is) = 1/5
+	P(. | good) / P(x | good) = 1/2
+	P(</s> | .) / P(x | .)= 7/7 
+
+	Product of all probabilities = 0.00536
+	
+	The probability for the given sentence can be calculated by 	multiplying the probabilities of the bigrams within the sentence. The probability of each bigram can be calculated by looking at the whole corpus and counting how often the respective bigram occurs, divided by the number of sentences in the corpus in total.
+
+Exercise 2:
+<s>The film is not good.</s>
+
+	P(The | <s>) / P(x | <s>)= 4/7
+	P(film | The) / P(x | The) = 1/4 
+	P(is | film) / P(x | film) = 1/2
+	P(not | is) / P(x | is)= 2/5
+	P(good | not) / P(x | not) = 0/2
+	P(. | good) / P(x | good)=  1/2
+	P(</s> | .)/ P(x | .) =  7/7
+
+	The difficulty here is that one bigram (good|not) is assigned the 	probability 0, because it doesn't appear in the corpus. Therefore, the example sentence will be assigned the probability of 0 as well, because the probability of the whole sentence is calculated by the product of all bigram probabilites. 
+
+
+Exercise 3:
+
+
+Modified model for Ex.1 with add-one-smoothing:
+
+	P(The | <s>) / P(x | <s>) = 4/7+20
+	P(film | The) / / P(x | The) = 2/4+20
+	P(is | film) / P(x | film) = 2/2+20
+	P(good | is) / P(x | is) = 2/5+20
+	P(. | good) / P(x | good) = 2/2+20
+	P(</s> | .) / P(x | .)= 8/7+20
+
+
+
+
+
+Modified model for Ex.2 with add-one-smoothing:
+
+	P(The | <s>) / P(x | <s>)= 5/7+20 = 0.185
+	P(film | The) / P(x | The) = 2/4 +20 = 0.083
+	P(is | film) / P(x | film) = 2/2+20 = 0.09
+	P(not | is) / P(x | is)= 3/5+20 = 0.12
+	P(good | not) / P(x | not) = 1/2+20 = 0.045
+	P(. | good) / P(x | good)=  2/2+20 = 0.09
+	P(</s> | .)/ P(x | .) =  8/7+20 = .0296
+
+= 0.000000006
+
+</s>
+<s>
+This 
+film 
+is 
+funny
+.
+I 
+enjoyed
+the 
+book
+was
+entertaining
+good
+game 
+not 
+bad
+It
+boring
+a
+
+
