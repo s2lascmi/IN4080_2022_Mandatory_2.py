@@ -178,6 +178,7 @@ size1 = int(len(tagged_sents_univ) * 0.1)
 size2 = int(len(tagged_sents_univ) * 0.2)
 news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_univ[:size1], tagged_sents_univ[size1:size2]
 
+
 # tagger = ConsecutivePosTagger(news_train)
 #print(round(tagger.accuracy(news_dev_test), 4))
 
@@ -195,6 +196,34 @@ news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_u
 # With *news_train* as training set and *news_dev_set* as valuation set, what is the accuracy of this baseline?
 # 
 # Does the tagger from (Part a) using the features from the NLTK book together with the universal tags beat the baseline?
+
+
+# print(sorted(counts.items(), key=itemgetter(1), reverse=True))
+# [('NOUN', 30654), ('VERB', 14399), ('ADP', 12355), ('.', 11928), ('DET', 11389), ('ADJ', 6706), ('ADV', 3349),
+# ('CONJ', 2717), ('PRON', 2535), ('PRT', 2264), ('NUM', 2166), ('X', 92)]
+most_frequent_tag = 'NOUN'
+
+import nltk
+from nltk import ConditionalFreqDist
+
+
+words = []
+tags = []
+for sentence in news_train:
+    for item in sentence:
+        words.append(item[0])
+        tags.append(item[1])
+
+ofd = ConditionalFreqDist((tag, word) for tag, word in zip(words, tags)) # simple comprehension pattern in python
+
+# table = ofd.tabulate(conditions= words[:20], samples= tags[:20])
+
+
+
+
+
+
+
 
 # #### Deliveries:
 # Code and results of runs for both parts. For both parts, also answers to the questions.
@@ -653,8 +682,8 @@ class ScikitConsecutivePosTagger(nltk.TaggerI):
 
 
 
-tagger = ScikitConsecutivePosTagger(news_train)
-print(round(tagger.accuracy(news_dev_test), 4))
+# tagger = ScikitConsecutivePosTagger(news_train)
+# print(round(tagger.accuracy(news_dev_test), 4))
 
 """ Feature extractor containing i.isnumeric() and previous settings"""
 ## result: 0.9658
@@ -680,9 +709,14 @@ print(round(tagger.accuracy(news_dev_test), 4))
 
 # ## Ex 5: Training on a larger corpus (15 points)
 # ### Part a.
-# We have so far used a smaller corpus, the news section, for finding optimal settings for a tagger. We will now try to make a better tagger by training on a larger corpus. We will use nearly the whole Brown corpus. But we will take away two categories for later evaluation: *adventure* and *hobbies*. We will also initially stay clear of *news* to be sure not to mix training and test data.
+# We have so far used a smaller corpus, the news section, for finding optimal settings for a tagger.
+# We will now try to make a better tagger by training on a larger corpus. We will use nearly the whole Brown corpus.
+# But we will take away two categories for later evaluation: *adventure* and *hobbies*.
+# We will also initially stay clear of *news* to be sure not to mix training and test data.
 # 
-# Call the Brown corpus with all categories except these three for *rest*. Shuffle the tagged sentences from *rest* and remember to use the universal pos tagset. Then split the set into 80%-10%-10%: *rest_train*, *rest_dev_test*, *rest_test*.
+# Call the Brown corpus with all categories except these three for *rest*. Shuffle the tagged sentences from *rest*
+# and remember to use the universal pos tagset. Then split the set into 80%-10%-10%: *rest_train*, *rest_dev_test*,
+# *rest_test*.
 # 
 # We can then merge these three sets with the corresponding sets from *news* to get final training and test sets:
 # 
@@ -692,25 +726,110 @@ print(round(tagger.accuracy(news_dev_test), 4))
 # 
 # Prepare the corpus as described.
 
+import random
+
+genres = ['belles_lettres', 'editorial', 'fiction', 'government',
+'humor', 'learned', 'lore', 'mystery', 'religion', 'reviews', 'romance',
+'science_fiction']
+
+rest = brown.tagged_sents(categories=genres, tagset='universal')
+rest = list(rest)
+
+random.seed(2798)
+random.shuffle(rest)
+
+split1 = int(len(rest) * 0.1)
+split2 = int(len(rest) * 0.2)
+rest_train, rest_test, rest_dev_test = rest[split2:], rest[:split1], rest[split1:split2]
+
+train = rest_train + news_train
+dev_test = rest_dev_test + news_dev_test
+test = rest_test + news_test
+
+
 # ### Part b.
 # The next step is to establish a baseline for a tagger trained on this larger corpus, and evaluate it on *dev_test*.
 
 # ### Part c.
-# We can then train our tagger on this larger corpus. Use the best settings from the earlier exercises, train on *train* and test on *dev_test*. What is the accuracy of your tagger? 
+# We can then train our tagger on this larger corpus. Use the best settings from the earlier exercises,
+# train on *train* and test on *dev_test*. What is the accuracy of your tagger?
 # 
 # #### Warning: Running this experiment may take 15-30 min.
 
+""" Settings: 
+Classifier: Logistic Regression
+Parameters: C-value = 10.0
+Feature extractor: looking at word itself, previous word, following word, and numericals
+"""
+
+# tagger = ScikitConsecutivePosTagger(train)
+# print(round(tagger.accuracy(dev_test), 4))
+# # Result: 0.969
+
+
 # ## Ex6: Evaluation metrics (10 points)
 # ### Part a.
-# The accuracy should be quite decent now $>0.97$. Still, we will like to find out more about where the tagger makes mistakes. With only 12 different tags, we can get all the results into a confusion table. Take a look at https://www.nltk.org/api/nltk.tag.api.html and make a confusion table for the results on *dev_test*.
+# The accuracy should be quite decent now $>0.97$. Still, we will like to find out more about where the
+# tagger makes mistakes. With only 12 different tags, we can get all the results into a confusion table.
+# Take a look at https://www.nltk.org/api/nltk.tag.api.html and make a confusion table for the results on *dev_test*.
 # 
 # Make sure you understand what the rows and columns are.
 
+# tagger = ScikitConsecutivePosTagger(train)
+# gold_data = dev_test
+# print(tagger.confusion(gold_data))
+
+#      |                             C           N           P           V       |
+#      |           A     A     A     O     D     O     N     R     P     E       |
+#      |           D     D     D     N     E     U     U     O     R     R       |
+#      |     .     J     P     V     J     T     N     M     N     T     B     X |
+# -----+-------------------------------------------------------------------------+
+#    . |<12724>    .     .     .     .     .     .     .     .     .     .     . |
+#  ADJ |     . <6539>    2   161     .     .   374     2     .     4   162     . |
+#  ADP |     1    11<12547>   70     5    16     8     .    15   189    17     . |
+#  ADV |     .   211   113 <4406>    9     8    47     .     .    20    17     . |
+# CONJ |     .     .     .     7 <3225>    1     .     .     .     .     1     . |
+#  DET |     .     1    34    14     3<12083>   13     .    26     .     .     . |
+# NOUN |     .   294     5    39     .     3<23724>   41     2     7   244     7 |
+#  NUM |     .     5     1     .     .     .    36 <1242>    .     .     2     . |
+# PRON |     .     .    49     3     .    33     9     . <3983>    .     1     1 |
+#  PRT |     .     3   102    10     .     2    35     .     2 <2387>    3     . |
+# VERB |     .    83    11    16     .     2   426     .     .     4<15317>    . |
+#    X |     5     5     4     1     .     3    74     .     3     .     4   <28>|
+# -----+-------------------------------------------------------------------------+
+# (row = reference; col = test)
+
 # ### Part b.
-# Finding hints on the same web page, calculate the precision, recall and f-measure for each tag and display the results in a table.
+# Finding hints on the same web page, calculate the precision, recall and f-measure for each tag and display the
+# results in a table.
+
+
+# print(tagger.evaluate_per_tag(gold_data))
+
+
+#  Tag | Prec.  | Recall | F-measure
+# -----+--------+--------+-----------
+#    . | 0.9995 | 1.0000 | 0.9998
+#  ADJ | 0.9143 | 0.9027 | 0.9084
+#  ADP | 0.9751 | 0.9742 | 0.9746
+#  ADV | 0.9321 | 0.9120 | 0.9220
+# CONJ | 0.9948 | 0.9972 | 0.9960
+#  DET | 0.9944 | 0.9925 | 0.9935
+# NOUN | 0.9587 | 0.9737 | 0.9661
+#  NUM | 0.9665 | 0.9658 | 0.9662
+# PRON | 0.9881 | 0.9765 | 0.9822
+#  PRT | 0.9142 | 0.9383 | 0.9261
+# VERB | 0.9714 | 0.9658 | 0.9686
+#    X | 0.7778 | 0.2205 | 0.3436
 
 # ### Part c.
 # Calculate the macro precision, macro recall and macro f-measure across the 12 tags. 
+
+
+
+
+
+
 
 # ## Ex 7: Error analysis (10 points)
 # Sometimes when we make classifiers for NLP phenomena, it makes sense to inspect the errors more thoroughly. Where does the classifier make errors? What kind of errors? Find five sentences where at least one token is mis-classified, and display these sentences on the follwing form, with the pred(icted) and gold tags.
@@ -728,6 +847,12 @@ print(round(tagger.accuracy(news_dev_test), 4))
 # 
 # Identify the words that are tagged differently. Comment on each of the differences. Would you say that the predicted tag is wrong? Or is there a genuine ambiguity such that both answers are defendable? Or is even the gold tag wrong? 
 
+
+
+
+
+
+
 # ## Ex 8: Final testing (10 points)
 # ### Part a.
 # We have reached a stage where we will make no further adjustments to our tagger. We are ready to perform the final testing. First, test the final tagger from exercise 5 on the the test set *test*? How is the result compared to *dev_test*?
@@ -737,6 +862,12 @@ print(round(tagger.accuracy(news_dev_test), 4))
 
 # #### Deliveries:
 # Code. Results of the runs. Answers to the questions.
+
+
+
+
+
+
 
 # ## Ex 9: Comparing to other taggers (10 points)
 
