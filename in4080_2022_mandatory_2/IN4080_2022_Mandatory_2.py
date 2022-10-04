@@ -582,32 +582,39 @@ def pos_features_all(sentence, i, history):
                 "suffix(2)": sentence[i][-2:],
                 "suffix(3)": sentence[i][-3:],
                 "word itself": sentence[i]}
+
+    """ Checking on the previous word """
     if i == 0:
         features["prev-word"] = "<START>"
     else:
         features["prev-word"] = sentence[i-1]
 
+    """ Checking on the next word """
     if i == (len(sentence)-1):
         features["next word"] = "<END>"
     else:
         features["next word"] = sentence[i+1]
 
-    # if sentence[i].isnumeric() == True:
-    #     features["numeric"] = "NUMERIC"
-    # else:
-    #     features["numeric"] = "NOT NUMERIC"
-    #
+    """ Is the whole string a number? """
+    if sentence[i].isnumeric() == True:
+        features["numeric"] = "NUMERIC"
+    else:
+        features["numeric"] = "NOT NUMERIC"
+
+    """ Is the whole word capitalized? """
     # if sentence[i].isupper() == True:
     #     features["uppercase"] = "UPPER"
     # else:
     #     features["uppercase"] = "NOT UPPERCASE"
 
-    if sentence[i].isupper() == True:
-        features["uppercase"] = "UPPER"
-    else:
-        if sentence[i][0].isupper
-        features["uppercase"] = "NOT UPPERCASE"
-
+    """ Is the whole word capitalized or only the first letter or no letter at all? """
+    # if sentence[i].isupper() == True:
+    #     features["uppercase"] = "UPPER"
+    # else:
+    #     if sentence[i][0].isupper():
+    #         features["uppercase"] = "CAPITALIZED"
+    #     else:
+    #         features["uppercase"] = "NOT UPPERCASE"
     return features
 
 
@@ -657,6 +664,12 @@ print(round(tagger.accuracy(news_dev_test), 4))
 
 """ Feature extractor combining the previous two settings"""
 ## result: 0.9646
+
+""" Feature extractor looking at whether first letter is capitalized"""
+## result: 0.9644
+
+""" Feature extractor looking at whether first letter is capitalized and whether string is a number"""
+## result: 0.9644
 
 
 # #### Deliveries:
