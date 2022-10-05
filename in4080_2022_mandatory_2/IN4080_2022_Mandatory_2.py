@@ -178,7 +178,7 @@ size1 = int(len(tagged_sents_univ) * 0.1)
 size2 = int(len(tagged_sents_univ) * 0.2)
 news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_univ[:size1], tagged_sents_univ[size1:size2]
 
-
+print(news_train)
 # tagger = ConsecutivePosTagger(news_train)
 #print(round(tagger.accuracy(news_dev_test), 4))
 
@@ -197,24 +197,50 @@ news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_u
 # 
 # Does the tagger from (Part a) using the features from the NLTK book together with the universal tags beat the baseline?
 
-
-# print(sorted(counts.items(), key=itemgetter(1), reverse=True))
-# [('NOUN', 30654), ('VERB', 14399), ('ADP', 12355), ('.', 11928), ('DET', 11389), ('ADJ', 6706), ('ADV', 3349),
-# ('CONJ', 2717), ('PRON', 2535), ('PRT', 2264), ('NUM', 2166), ('X', 92)]
-most_frequent_tag = 'NOUN'
-
+from collections import defaultdict
+from operator import itemgetter
 import nltk
 from nltk import ConditionalFreqDist
 
+# counts = defaultdict(int)
+# for (word, tag) in news_train:
+#     counts[tag] += 1
+#
+# frequent_tags = sorted(counts.items(), key=itemgetter(1), reverse=True)
+# most_frequent_tag = frequent_tags[0][0]
+#print(most_frequent_tag)
 
-words = []
-tags = []
-for sentence in news_train:
-    for item in sentence:
-        words.append(item[0])
-        tags.append(item[1])
 
-ofd = ConditionalFreqDist((tag, word) for tag, word in zip(words, tags)) # simple comprehension pattern in python
+def baseline(data):
+    tags_count_dict = {}
+    for sentence in data:
+        for tuple in sentence:
+            (word, tag) = tuple
+            if word not in tags_count_dict.keys():
+                tags_count_dict[word] = {tag: 1}
+            else:
+                if tags_count_dict[word].get(tag) is not None and tags_count_dict[word].get(tag) > 0:
+                    tags_count_dict[word].get(tag).__add__(1)
+                # else:
+
+    return most_frequent_tag
+
+test = [[('He', 'PRON'), ('He', 'PRON'), ('He', 'PRON'), ('He', 'ADJ'), ('he', 'PRON'), ('And','VERB')]]
+baseline(test)
+
+# print(most_frequent_tag)
+# [('NOUN', 30654), ('VERB', 14399), ('ADP', 12355), ('.', 11928), ('DET', 11389), ('ADJ', 6706), ('ADV', 3349),
+# ('CONJ', 2717), ('PRON', 2535), ('PRT', 2264), ('NUM', 2166), ('X', 92)]
+
+
+# words = []
+# tags = []
+# for sentence in news_train:
+#     for item in sentence:
+#         words.append(item[0])
+#         tags.append(item[1])
+#
+# ofd = ConditionalFreqDist((tag, word) for tag, word in zip(words, tags)) # simple comprehension pattern in python
 
 # table = ofd.tabulate(conditions= words[:20], samples= tags[:20])
 
