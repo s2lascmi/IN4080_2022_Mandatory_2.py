@@ -178,7 +178,7 @@ size1 = int(len(tagged_sents_univ) * 0.1)
 size2 = int(len(tagged_sents_univ) * 0.2)
 news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_univ[:size1], tagged_sents_univ[size1:size2]
 
-print(news_train)
+
 # tagger = ConsecutivePosTagger(news_train)
 #print(round(tagger.accuracy(news_dev_test), 4))
 
@@ -197,57 +197,44 @@ print(news_train)
 # 
 # Does the tagger from (Part a) using the features from the NLTK book together with the universal tags beat the baseline?
 
-from collections import defaultdict
-from operator import itemgetter
+
 import nltk
 from nltk import ConditionalFreqDist
 
-# counts = defaultdict(int)
-# for (word, tag) in news_train:
-#     counts[tag] += 1
-#
-# frequent_tags = sorted(counts.items(), key=itemgetter(1), reverse=True)
-# most_frequent_tag = frequent_tags[0][0]
-#print(most_frequent_tag)
+class BaselinePosTagger(nltk.TaggerI):
+    def __init__(self, train_sents):
+        self.train_sents = train_sents
+        self.cfd = ConditionalFreqDist([(word.lower(), tag) for sentence in train_sents for (word, tag) in sentence])
+        self.max_ = 0
+        self.most_common_tag = ""
+        self.most_common_pos()
 
+    def most_common_pos(self):
+        tags = {}
+        max_ = 0
+        max_word = {}
+        for sentence in self.train_sents:
+            for word, tag in sentence:
+                tags[word] = tag
+        for key in self.cfd:
+            if self.cfd[key].N() > max_:
+                max_ = self.cfd[key].N()
+                max_word[max_] = key
+        self.max = max_
+        self.most_common_tag = tags[max_word[max_]]
 
-def baseline(data):
-    tags_count_dict = {}
-    for sentence in data:
-        for tuple in sentence:
-            (word, tag) = tuple
-            if word not in tags_count_dict.keys():
-                tags_count_dict[word] = {tag: 1}
+    def tag(self, sentence):
+        history = []
+        for i, word in enumerate(sentence):
+            if self.cfd[word].N() > 0:
+                history.append(self.cfd[word].max())
             else:
-                if tags_count_dict[word].get(tag) is not None and tags_count_dict[word].get(tag) > 0:
-                    tags_count_dict[word].get(tag).__add__(1)
-                # else:
+                history.append(self.most_common_tag)
+        return zip(sentence, history)
 
-    return most_frequent_tag
-
-test = [[('He', 'PRON'), ('He', 'PRON'), ('He', 'PRON'), ('He', 'ADJ'), ('he', 'PRON'), ('And','VERB')]]
-baseline(test)
-
-# print(most_frequent_tag)
-# [('NOUN', 30654), ('VERB', 14399), ('ADP', 12355), ('.', 11928), ('DET', 11389), ('ADJ', 6706), ('ADV', 3349),
-# ('CONJ', 2717), ('PRON', 2535), ('PRT', 2264), ('NUM', 2166), ('X', 92)]
-
-
-# words = []
-# tags = []
-# for sentence in news_train:
-#     for item in sentence:
-#         words.append(item[0])
-#         tags.append(item[1])
-#
-# ofd = ConditionalFreqDist((tag, word) for tag, word in zip(words, tags)) # simple comprehension pattern in python
-
-# table = ofd.tabulate(conditions= words[:20], samples= tags[:20])
-
-
-
-
-
+# baseline_tagger = BaselinePosTagger(news_train)
+# print(round(baseline_tagger.accuracy(news_dev_test), 4))
+## baseline result: 0.7582
 
 
 
@@ -268,7 +255,6 @@ baseline(test)
 
 import numpy as np
 import sklearn
-
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
@@ -435,6 +421,10 @@ class ScikitConsecutivePosTagger(nltk.TaggerI):
 
 """ BernoulliNB(alpha=0.0001) """
 ## result: 0.934
+
+
+""" Baseline Tagger Accuracy (for comparison) """
+## result: 0.7582
 
 
 # ## Ex 3: Logistic regression (10 points)
@@ -757,7 +747,7 @@ import random
 genres = ['belles_lettres', 'editorial', 'fiction', 'government',
 'humor', 'learned', 'lore', 'mystery', 'religion', 'reviews', 'romance',
 'science_fiction']
-
+#
 rest = brown.tagged_sents(categories=genres, tagset='universal')
 rest = list(rest)
 
@@ -775,6 +765,13 @@ test = rest_test + news_test
 
 # ### Part b.
 # The next step is to establish a baseline for a tagger trained on this larger corpus, and evaluate it on *dev_test*.
+
+
+# baseline_tagger_large = BaselinePosTagger(train)
+# print(round(baseline_tagger_large.accuracy(dev_test), 4))
+## baseline result: 0.8446
+
+
 
 # ### Part c.
 # We can then train our tagger on this larger corpus. Use the best settings from the earlier exercises,
@@ -830,7 +827,9 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 # results in a table.
 
 
-# print(tagger.evaluate_per_tag(gold_data))
+
+# table = tagger.evaluate_per_tag(gold_data)
+# print(table)
 
 
 #  Tag | Prec.  | Recall | F-measure
@@ -852,13 +851,25 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 # Calculate the macro precision, macro recall and macro f-measure across the 12 tags. 
 
 
+macro_prec = (0.9995+0.9143+0.9751+0.9321+0.9948 +0.9944+0.9587+0.9665+0.9881+0.9142+0.9714+0.7778)/12
+# print(macro_prec)
+## result: 0.9489083333333331
 
+macro_rec = (1.0000+0.9027+0.9742+0.9120+0.9972+0.9925+0.9737+0.9658+0.9765+0.9383+0.9658+0.2205)/12
+# print(macro_rec)
+## result: 0.9015999999999998
+
+macro_f = (0.9998+0.9084+0.9746+0.9220+0.9960+0.9935+0.9661+0.9662+0.9822+0.9261+0.9686+0.3436)/12
+# print(macro_f)
+## result: 0.9122583333333334
 
 
 
 
 # ## Ex 7: Error analysis (10 points)
-# Sometimes when we make classifiers for NLP phenomena, it makes sense to inspect the errors more thoroughly. Where does the classifier make errors? What kind of errors? Find five sentences where at least one token is mis-classified, and display these sentences on the follwing form, with the pred(icted) and gold tags.
+# Sometimes when we make classifiers for NLP phenomena, it makes sense to inspect the errors more thoroughly.
+# Where does the classifier make errors? What kind of errors? Find five sentences where at least one token is
+# mis-classified, and display these sentences on the follwing form, with the pred(icted) and gold tags.
 # 
 # ```
 # Token               pred   gold   
@@ -871,7 +882,9 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 # leaves              VERB   NOUN    
 # ```
 # 
-# Identify the words that are tagged differently. Comment on each of the differences. Would you say that the predicted tag is wrong? Or is there a genuine ambiguity such that both answers are defendable? Or is even the gold tag wrong? 
+# Identify the words that are tagged differently. Comment on each of the differences.
+# Would you say that the predicted tag is wrong? Or is there a genuine ambiguity such that both answers are defendable?
+# Or is even the gold tag wrong?
 
 
 
@@ -881,10 +894,14 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 
 # ## Ex 8: Final testing (10 points)
 # ### Part a.
-# We have reached a stage where we will make no further adjustments to our tagger. We are ready to perform the final testing. First, test the final tagger from exercise 5 on the the test set *test*? How is the result compared to *dev_test*?
+# We have reached a stage where we will make no further adjustments to our tagger.
+# We are ready to perform the final testing. First, test the final tagger from exercise 5 on the the test set *test*?
+# How is the result compared to *dev_test*?
 
 # ### Part b.
-# We will compare in-domain to out-of-domain testing. Test the big tagger first on *adventures* then on *hobbies*. Discuss in a few sentences why you see different results from when testing on *test*. Why do you think you got different results on *adventures* compared to *hobbies*?
+# We will compare in-domain to out-of-domain testing. Test the big tagger first on *adventures* then on *hobbies*.
+# Discuss in a few sentences why you see different results from when testing on *test*.
+# Why do you think you got different results on *adventures* compared to *hobbies*?
 
 # #### Deliveries:
 # Code. Results of the runs. Answers to the questions.
@@ -898,14 +915,18 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 # ## Ex 9: Comparing to other taggers (10 points)
 
 # ### Part a.
-# In the lectures, we spent quite some time on the HMM-tagger. NLTK comes with an HMM-tagger which we may train and test on our own corpus. It can be trained by 
+# In the lectures, we spent quite some time on the HMM-tagger.
+# NLTK comes with an HMM-tagger which we may train and test on our own corpus. It can be trained by
 # 
 # `news_hmm_tagger = nltk.HiddenMarkovModelTagger.train(news_train)`
 # 
-# and tested similarly as we have tested our other taggers. Train and test it, first on the *news* set then on the big *train*/*test* set. How does it perform compared to your best tagger? What about speed?
+# and tested similarly as we have tested our other taggers.
+# Train and test it, first on the *news* set then on the big *train*/*test* set.
+# How does it perform compared to your best tagger? What about speed?
 
 # ### Part b
-# NLTK also comes with an averaged perceptron tagger which we may train and test. It is currently considered the best tagger included with NLTK. It can be trained as follows:
+# NLTK also comes with an averaged perceptron tagger which we may train and test.
+# It is currently considered the best tagger included with NLTK. It can be trained as follows:
 
 # ```
 # %%time
