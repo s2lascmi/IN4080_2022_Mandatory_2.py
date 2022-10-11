@@ -102,7 +102,7 @@ train_sents, test_sents = tagged_sents[size:], tagged_sents[:size]
 # In[2]:
 
 
-def pos_features(sentence, i, history): 
+def pos_features(sentence, i, history):
     features = {"suffix(1)": sentence[i][-1:],
                 "suffix(2)": sentence[i][-2:],
                 "suffix(3)": sentence[i][-3:],}
@@ -116,27 +116,27 @@ def pos_features(sentence, i, history):
 # In[3]:
 
 
-class ConsecutivePosTagger(nltk.TaggerI):
-
-    def __init__(self, train_sents, features=pos_features):
-        self.features = features
-        train_set = []
-        for tagged_sent in train_sents:
-            untagged_sent = nltk.tag.untag(tagged_sent)
-            history = []
-            for i, (word, tag) in enumerate(tagged_sent):
-                featureset = features(untagged_sent, i, history)
-                train_set.append( (featureset, tag) )
-                history.append(tag)
-        self.classifier = nltk.NaiveBayesClassifier.train(train_set)
-
-    def tag(self, sentence):
-        history = []
-        for i, word in enumerate(sentence):
-            featureset = self.features(sentence, i, history)
-            tag = self.classifier.classify(featureset)
-            history.append(tag)
-        return zip(sentence, history)
+# class ConsecutivePosTagger(nltk.TaggerI):
+#
+#     def __init__(self, train_sents, features=pos_features):
+#         self.features = features
+#         train_set = []
+#         for tagged_sent in train_sents:
+#             untagged_sent = nltk.tag.untag(tagged_sent)
+#             history = []
+#             for i, (word, tag) in enumerate(tagged_sent):
+#                 featureset = features(untagged_sent, i, history)
+#                 train_set.append( (featureset, tag) )
+#                 history.append(tag)
+#         self.classifier = nltk.NaiveBayesClassifier.train(train_set)
+#
+#     def tag(self, sentence):
+#         history = []
+#         for i, word in enumerate(sentence):
+#             featureset = self.features(sentence, i, history)
+#             tag = self.classifier.classify(featureset)
+#             history.append(tag)
+#         return zip(sentence, history)
 
 
 # Following the NLTK book, we train and test a classifier. Observe that the NLTK method for accuracy has been
@@ -180,7 +180,7 @@ news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_u
 
 
 # tagger = ConsecutivePosTagger(news_train)
-#print(round(tagger.accuracy(news_dev_test), 4))
+# print(round(tagger.accuracy(news_dev_test), 4))
 
 # # result: 0.8689
 
@@ -201,36 +201,36 @@ news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_u
 import nltk
 from nltk import ConditionalFreqDist
 
-class BaselinePosTagger(nltk.TaggerI):
-    def __init__(self, train_sents):
-        self.train_sents = train_sents
-        self.cfd = ConditionalFreqDist([(word.lower(), tag) for sentence in train_sents for (word, tag) in sentence])
-        self.max_ = 0
-        self.most_common_tag = ""
-        self.most_common_pos()
-
-    def most_common_pos(self):
-        tags = {}
-        max_ = 0
-        max_word = {}
-        for sentence in self.train_sents:
-            for word, tag in sentence:
-                tags[word] = tag
-        for key in self.cfd:
-            if self.cfd[key].N() > max_:
-                max_ = self.cfd[key].N()
-                max_word[max_] = key
-        self.max = max_
-        self.most_common_tag = tags[max_word[max_]]
-
-    def tag(self, sentence):
-        history = []
-        for i, word in enumerate(sentence):
-            if self.cfd[word].N() > 0:
-                history.append(self.cfd[word].max())
-            else:
-                history.append(self.most_common_tag)
-        return zip(sentence, history)
+# class BaselinePosTagger(nltk.TaggerI):
+#     def __init__(self, train_sents):
+#         self.train_sents = train_sents
+#         self.cfd = ConditionalFreqDist([(word.lower(), tag) for sentence in train_sents for (word, tag) in sentence])
+#         self.max_ = 0
+#         self.most_common_tag = ""
+#         self.most_common_pos()
+#
+#     def most_common_pos(self):
+#         tags = {}
+#         max_ = 0
+#         max_word = {}
+#         for sentence in self.train_sents:
+#             for word, tag in sentence:
+#                 tags[word] = tag
+#         for key in self.cfd:
+#             if self.cfd[key].N() > max_:
+#                 max_ = self.cfd[key].N()
+#                 max_word[max_] = key
+#         self.max = max_
+#         self.most_common_tag = tags[max_word[max_]]
+#
+#     def tag(self, sentence):
+#         history = []
+#         for i, word in enumerate(sentence):
+#             if self.cfd[word].N() > 0:
+#                 history.append(self.cfd[word].max())
+#             else:
+#                 history.append(self.most_common_tag)
+#         return zip(sentence, history)
 
 # baseline_tagger = BaselinePosTagger(news_train)
 # print(round(baseline_tagger.accuracy(news_dev_test), 4))
@@ -260,38 +260,38 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
 
 
-class ScikitConsecutivePosTagger(nltk.TaggerI):
-
-    def __init__(self, train_sents, 
-                 features=pos_features, clf = BernoulliNB(alpha=0.0001)):
-        # Using pos_features as default.
-        self.features = features
-        train_features = []
-        train_labels = []
-        for tagged_sent in train_sents:
-            history = []
-            untagged_sent = nltk.tag.untag(tagged_sent)
-            for i, (word, tag) in enumerate(tagged_sent):
-                featureset = features(untagged_sent, i, history)
-                train_features.append(featureset)
-                train_labels.append(tag)
-                history.append(tag)
-        v = DictVectorizer()
-        X_train = v.fit_transform(train_features)
-        y_train = np.array(train_labels)
-        clf.fit(X_train, y_train)
-        self.classifier = clf
-        self.dict = v
-
-    def tag(self, sentence):
-        test_features = []
-        history = []
-        for i, word in enumerate(sentence):
-            featureset = self.features(sentence, i, history)
-            test_features.append(featureset)
-        X_test = self.dict.transform(test_features)
-        tags = self.classifier.predict(X_test)
-        return zip(sentence, tags)
+# class ScikitConsecutivePosTagger(nltk.TaggerI):
+#
+#     def __init__(self, train_sents,
+#                  features=pos_features, clf = BernoulliNB(alpha=0.0001)):
+#         ## Using pos_features as default.
+#         self.features = features
+#         train_features = []
+#         train_labels = []
+#         for tagged_sent in train_sents:
+#             history = []
+#             untagged_sent = nltk.tag.untag(tagged_sent)
+#             for i, (word, tag) in enumerate(tagged_sent):
+#                 featureset = features(untagged_sent, i, history)
+#                 train_features.append(featureset)
+#                 train_labels.append(tag)
+#                 history.append(tag)
+#         v = DictVectorizer()
+#         X_train = v.fit_transform(train_features)
+#         y_train = np.array(train_labels)
+#         clf.fit(X_train, y_train)
+#         self.classifier = clf
+#         self.dict = v
+#
+#     def tag(self, sentence):
+#         test_features = []
+#         history = []
+#         for i, word in enumerate(sentence):
+#             featureset = self.features(sentence, i, history)
+#             test_features.append(featureset)
+#         X_test = self.dict.transform(test_features)
+#         tags = self.classifier.predict(X_test)
+#         return zip(sentence, tags)
 
 
 # ### Part a.
@@ -366,38 +366,38 @@ def pos_features_ext(sentence, i, history):
     return features
 
 
-class ScikitConsecutivePosTagger(nltk.TaggerI):
-
-    def __init__(self, train_sents,
-                 features=pos_features_ext, clf = BernoulliNB(alpha=1)):
-        # Using pos_features as default.
-        self.features = features
-        train_features = []
-        train_labels = []
-        for tagged_sent in train_sents:
-            history = []
-            untagged_sent = nltk.tag.untag(tagged_sent)
-            for i, (word, tag) in enumerate(tagged_sent):
-                featureset = features(untagged_sent, i, history)
-                train_features.append(featureset)
-                train_labels.append(tag)
-                history.append(tag)
-        v = DictVectorizer()
-        X_train = v.fit_transform(train_features)
-        y_train = np.array(train_labels)
-        clf.fit(X_train, y_train)
-        self.classifier = clf
-        self.dict = v
-
-    def tag(self, sentence):
-        test_features = []
-        history = []
-        for i, word in enumerate(sentence):
-            featureset = self.features(sentence, i, history)
-            test_features.append(featureset)
-        X_test = self.dict.transform(test_features)
-        tags = self.classifier.predict(X_test)
-        return zip(sentence, tags)
+# class ScikitConsecutivePosTagger(nltk.TaggerI):
+#
+#     def __init__(self, train_sents,
+#                  features=pos_features_ext, clf = BernoulliNB(alpha=1)):
+#         # Using pos_features as default.
+#         self.features = features
+#         train_features = []
+#         train_labels = []
+#         for tagged_sent in train_sents:
+#             history = []
+#             untagged_sent = nltk.tag.untag(tagged_sent)
+#             for i, (word, tag) in enumerate(tagged_sent):
+#                 featureset = features(untagged_sent, i, history)
+#                 train_features.append(featureset)
+#                 train_labels.append(tag)
+#                 history.append(tag)
+#         v = DictVectorizer()
+#         X_train = v.fit_transform(train_features)
+#         y_train = np.array(train_labels)
+#         clf.fit(X_train, y_train)
+#         self.classifier = clf
+#         self.dict = v
+#
+#     def tag(self, sentence):
+#         test_features = []
+#         history = []
+#         for i, word in enumerate(sentence):
+#             featureset = self.features(sentence, i, history)
+#             test_features.append(featureset)
+#         X_test = self.dict.transform(test_features)
+#         tags = self.classifier.predict(X_test)
+#         return zip(sentence, tags)
 
 
 
@@ -442,50 +442,39 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
 
-def pos_features_ext(sentence, i, history):
-    features = {"suffix(1)": sentence[i][-1:],
-                "suffix(2)": sentence[i][-2:],
-                "suffix(3)": sentence[i][-3:],
-                "word itself": sentence[i]}
-    if i == 0:
-        features["prev-word"] = "<START>"
-    else:
-        features["prev-word"] = sentence[i-1]
-    return features
 
-
-class ScikitConsecutivePosTagger(nltk.TaggerI):
-
-    def __init__(self, train_sents,
-                 features=pos_features_ext, clf = LogisticRegression(C=1000.0)):
-        # Using pos_features as default.
-        self.features = features
-        train_features = []
-        train_labels = []
-        for tagged_sent in train_sents:
-            history = []
-            untagged_sent = nltk.tag.untag(tagged_sent)
-            for i, (word, tag) in enumerate(tagged_sent):
-                featureset = features(untagged_sent, i, history)
-                train_features.append(featureset)
-                train_labels.append(tag)
-                history.append(tag)
-        v = DictVectorizer()
-        X_train = v.fit_transform(train_features)
-        y_train = np.array(train_labels)
-        clf.fit(X_train, y_train)
-        self.classifier = clf
-        self.dict = v
-
-    def tag(self, sentence):
-        test_features = []
-        history = []
-        for i, word in enumerate(sentence):
-            featureset = self.features(sentence, i, history)
-            test_features.append(featureset)
-        X_test = self.dict.transform(test_features)
-        tags = self.classifier.predict(X_test)
-        return zip(sentence, tags)
+# class ScikitConsecutivePosTagger(nltk.TaggerI):
+#
+#     def __init__(self, train_sents,
+#                  features=pos_features_ext, clf = LogisticRegression(C=1000.0)):
+#         # Using pos_features as default.
+#         self.features = features
+#         train_features = []
+#         train_labels = []
+#         for tagged_sent in train_sents:
+#             history = []
+#             untagged_sent = nltk.tag.untag(tagged_sent)
+#             for i, (word, tag) in enumerate(tagged_sent):
+#                 featureset = features(untagged_sent, i, history)
+#                 train_features.append(featureset)
+#                 train_labels.append(tag)
+#                 history.append(tag)
+#         v = DictVectorizer()
+#         X_train = v.fit_transform(train_features)
+#         y_train = np.array(train_labels)
+#         clf.fit(X_train, y_train)
+#         self.classifier = clf
+#         self.dict = v
+#
+#     def tag(self, sentence):
+#         test_features = []
+#         history = []
+#         for i, word in enumerate(sentence):
+#             featureset = self.features(sentence, i, history)
+#             test_features.append(featureset)
+#         X_test = self.dict.transform(test_features)
+#         tags = self.classifier.predict(X_test)
+#         return zip(sentence, tags)
 
 
 
@@ -555,38 +544,38 @@ def pos_features_next(sentence, i, history):
     return features
 
 
-class ScikitConsecutivePosTagger(nltk.TaggerI):
-
-    def __init__(self, train_sents,
-                 features=pos_features_next, clf = LogisticRegression(C=10.0)):
-        # Using pos_features as default.
-        self.features = features
-        train_features = []
-        train_labels = []
-        for tagged_sent in train_sents:
-            history = []
-            untagged_sent = nltk.tag.untag(tagged_sent)
-            for i, (word, tag) in enumerate(tagged_sent):
-                featureset = features(untagged_sent, i, history)
-                train_features.append(featureset)
-                train_labels.append(tag)
-                history.append(tag)
-        v = DictVectorizer()
-        X_train = v.fit_transform(train_features)
-        y_train = np.array(train_labels)
-        clf.fit(X_train, y_train)
-        self.classifier = clf
-        self.dict = v
-
-    def tag(self, sentence):
-        test_features = []
-        history = []
-        for i, word in enumerate(sentence):
-            featureset = self.features(sentence, i, history)
-            test_features.append(featureset)
-        X_test = self.dict.transform(test_features)
-        tags = self.classifier.predict(X_test)
-        return zip(sentence, tags)
+# class ScikitConsecutivePosTagger(nltk.TaggerI):
+#
+#     def __init__(self, train_sents,
+#                  features=pos_features_next, clf = LogisticRegression(C=10.0)):
+#         # Using pos_features as default.
+#         self.features = features
+#         train_features = []
+#         train_labels = []
+#         for tagged_sent in train_sents:
+#             history = []
+#             untagged_sent = nltk.tag.untag(tagged_sent)
+#             for i, (word, tag) in enumerate(tagged_sent):
+#                 featureset = features(untagged_sent, i, history)
+#                 train_features.append(featureset)
+#                 train_labels.append(tag)
+#                 history.append(tag)
+#         v = DictVectorizer()
+#         X_train = v.fit_transform(train_features)
+#         y_train = np.array(train_labels)
+#         clf.fit(X_train, y_train)
+#         self.classifier = clf
+#         self.dict = v
+#
+#     def tag(self, sentence):
+#         test_features = []
+#         history = []
+#         for i, word in enumerate(sentence):
+#             featureset = self.features(sentence, i, history)
+#             test_features.append(featureset)
+#         X_test = self.dict.transform(test_features)
+#         tags = self.classifier.predict(X_test)
+#         return zip(sentence, tags)
 
 
 
@@ -667,7 +656,6 @@ class ScikitConsecutivePosTagger(nltk.TaggerI):
 
     def __init__(self, train_sents,
                  features=pos_features_all, clf = LogisticRegression(C=10.0)):
-        # Using pos_features as default.
         self.features = features
         train_features = []
         train_labels = []
@@ -700,6 +688,7 @@ class ScikitConsecutivePosTagger(nltk.TaggerI):
 
 # tagger = ScikitConsecutivePosTagger(news_train)
 # print(round(tagger.accuracy(news_dev_test), 4))
+
 
 """ Feature extractor containing i.isnumeric() and previous settings"""
 ## result: 0.9658
@@ -787,8 +776,8 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 
 # tagger = ScikitConsecutivePosTagger(train)
 # print(round(tagger.accuracy(dev_test), 4))
-# # Result: 0.969
-
+# ## Result: 0.969
+# ## Speed: 3:16 mins
 
 # ## Ex6: Evaluation metrics (10 points)
 # ### Part a.
@@ -887,7 +876,8 @@ macro_f = (0.9998+0.9084+0.9746+0.9220+0.9960+0.9935+0.9661+0.9662+0.9822+0.9261
 # Or is even the gold tag wrong?
 
 
-
+tagger = ScikitConsecutivePosTagger(train)
+gold_data = dev_test
 
 
 
@@ -898,10 +888,27 @@ macro_f = (0.9998+0.9084+0.9746+0.9220+0.9960+0.9935+0.9661+0.9662+0.9822+0.9261
 # We are ready to perform the final testing. First, test the final tagger from exercise 5 on the the test set *test*?
 # How is the result compared to *dev_test*?
 
+# tagger = ScikitConsecutivePosTagger(train)
+# print(round(tagger.accuracy(test), 4))
+## result: 0.9698
+
+
+
+
 # ### Part b.
 # We will compare in-domain to out-of-domain testing. Test the big tagger first on *adventures* then on *hobbies*.
 # Discuss in a few sentences why you see different results from when testing on *test*.
 # Why do you think you got different results on *adventures* compared to *hobbies*?
+
+adventure = brown.tagged_sents(categories="adventure", tagset='universal')
+hobbies = brown.tagged_sents(categories="hobbies", tagset='universal')
+
+# tagger = ScikitConsecutivePosTagger(train)
+# print("adventure", round(tagger.accuracy(adventure), 4))
+# ## result of testing on adventure-set: 0.963
+# print("hobbies", round(tagger.accuracy(hobbies), 4))
+# ## result of testing on hobbies-set:
+
 
 # #### Deliveries:
 # Code. Results of the runs. Answers to the questions.
@@ -924,19 +931,37 @@ macro_f = (0.9998+0.9084+0.9746+0.9220+0.9960+0.9935+0.9661+0.9662+0.9822+0.9261
 # Train and test it, first on the *news* set then on the big *train*/*test* set.
 # How does it perform compared to your best tagger? What about speed?
 
+# news_hmm_taggest set", round(news_hmm_tagger.accuracy(news_test), 4))
+# ## result: 0.8995
+
+
+# news_hmm_tagger = nltk.HiddenMarkovModelTagger.train(train)
+# print("big test set", round(news_hmm_tagger.accuracy(test), 4))
+# ## result: 0.9518
+# ## speed: 2:50 mins
+
+
 # ### Part b
 # NLTK also comes with an averaged perceptron tagger which we may train and test.
 # It is currently considered the best tagger included with NLTK. It can be trained as follows:
 
-# ```
-# %%time
-# per_tagger = nltk.PerceptronTagger(load=False)
-# per_tagger.train(train)
-# ```
 
-# It is tested similarly to our other taggers. 
+# It is tested similarly to our other taggers.
 # 
-# Train and test it, first on the news set and then on the big train/test set. How does it perform compared to your best tagger? Did you beat it? What about speed?
+# Train and test it, first on the news set and then on the big train/test set.
+# How does it perform compared to your best tagger? Did you beat it? What about speed?
+
+
+per_tagger = nltk.PerceptronTagger(load=False)
+# per_tagger.train(news_train)
+# print("perceptron tagger on news", round(per_tagger.accuracy(news_test), 4))
+# ## result: 0.9638
+
+per_tagger.train(train)
+print("perceptron tagger on big data set", round(per_tagger.accuracy(test), 4))
+# ## result: 0.9793
+# ## speed: 3:54 mins
+
 
 # #### Deliveries: 
 # Code. Results of the runs. Answers to the questions.
