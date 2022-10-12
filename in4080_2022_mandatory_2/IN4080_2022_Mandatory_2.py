@@ -151,6 +151,9 @@ def pos_features(sentence, i, history):
 
 # This should give results comparable to the NLTK book.
 
+"""##############
+Exercise 1
+##############"""
 # ## Ex 1: Tag set and baseline (10 points)
 # ### Part a. Tag set and experimental set-up
 
@@ -201,40 +204,26 @@ news_train, news_test, news_dev_test = tagged_sents_univ[size2:], tagged_sents_u
 import nltk
 from nltk import ConditionalFreqDist
 
-# class BaselinePosTagger(nltk.TaggerI):
-#     def __init__(self, train_sents):
-#         self.train_sents = train_sents
-#         self.cfd = ConditionalFreqDist([(word.lower(), tag) for sentence in train_sents for (word, tag) in sentence])
-#         self.max_ = 0
-#         self.most_common_tag = ""
-#         self.most_common_pos()
-#
-#     def most_common_pos(self):
-#         tags = {}
-#         max_ = 0
-#         max_word = {}
-#         for sentence in self.train_sents:
-#             for word, tag in sentence:
-#                 tags[word] = tag
-#         for key in self.cfd:
-#             if self.cfd[key].N() > max_:
-#                 max_ = self.cfd[key].N()
-#                 max_word[max_] = key
-#         self.max = max_
-#         self.most_common_tag = tags[max_word[max_]]
-#
-#     def tag(self, sentence):
-#         history = []
-#         for i, word in enumerate(sentence):
-#             if self.cfd[word].N() > 0:
-#                 history.append(self.cfd[word].max())
-#             else:
-#                 history.append(self.most_common_tag)
-#         return zip(sentence, history)
+
+class BaselinePosTagger(nltk.TaggerI):
+
+    def __init__(self, train_sents):
+        self.cfd = nltk.ConditionalFreqDist([(word, tag) for sentence in train_sents for (word, tag) in sentence])
+        self.tag_fd = nltk.FreqDist(tag for sentence in train_sents for (word,tag) in sentence)
+
+    def tag(self, sentence):
+        history = []
+        for i, word in enumerate(sentence):
+            if self.cfd[word].N() > 0:
+                history.append(self.cfd[word].max())
+            else:
+                history.append(self.tag_fd.max())
+        return zip(sentence, history)
+
 
 # baseline_tagger = BaselinePosTagger(news_train)
-# print(round(baseline_tagger.accuracy(news_dev_test), 4))
-## baseline result: 0.7582
+# print("Baseline tagger", round(baseline_tagger.accuracy(news_dev_test), 4))
+## baseline result: 0.9296
 
 
 
@@ -242,7 +231,9 @@ from nltk import ConditionalFreqDist
 # Code and results of runs for both parts. For both parts, also answers to the questions.
 
 
-
+"""##############
+Exercise 2
+##############"""
 # ## Ex 2: scikit-learn and tuning (10 points)
 # Our goal will be to improve the tagger compared to the simple suffix-based tagger.
 # For the further experiments, we move to scikit-learn which yields more options for considering various alternatives.
@@ -427,6 +418,10 @@ def pos_features_ext(sentence, i, history):
 ## result: 0.7582
 
 
+
+"""##############
+Exercise 3
+##############"""
 # ## Ex 3: Logistic regression (10 points)
 # ### Part a.
 # We proceed with the best feature selector from the last exercise.
@@ -511,7 +506,9 @@ from sklearn.feature_extraction import DictVectorizer
 # Code. Results of the runs. Answers to the questions.
 
 
-
+"""##############
+Exercise 4
+##############"""
 # ## Ex 4: Features (15 points)
 # ### Part a.
 # We will now stick to the *LogisticRegression()* with the optimal C from the last point and see
@@ -711,7 +708,9 @@ class ScikitConsecutivePosTagger(nltk.TaggerI):
 
 
 
-
+"""##############
+Exercise 5
+##############"""
 # ## Ex 5: Training on a larger corpus (15 points)
 # ### Part a.
 # We have so far used a smaller corpus, the news section, for finding optimal settings for a tagger.
@@ -757,7 +756,7 @@ test = rest_test + news_test
 
 
 # baseline_tagger_large = BaselinePosTagger(train)
-# print(round(baseline_tagger_large.accuracy(dev_test), 4))
+# print("baseline tagger on large data set", round(baseline_tagger_large.accuracy(dev_test), 4))
 ## baseline result: 0.8446
 
 
@@ -779,6 +778,10 @@ Feature extractor: looking at word itself, previous word, following word, and nu
 # ## Result: 0.969
 # ## Speed: 3:16 mins
 
+
+"""##############
+Exercise 6
+##############"""
 # ## Ex6: Evaluation metrics (10 points)
 # ### Part a.
 # The accuracy should be quite decent now $>0.97$. Still, we will like to find out more about where the
@@ -854,7 +857,9 @@ macro_f = (0.9998+0.9084+0.9746+0.9220+0.9960+0.9935+0.9661+0.9662+0.9822+0.9261
 
 
 
-
+"""##############
+Exercise 7
+##############"""
 # ## Ex 7: Error analysis (10 points)
 # Sometimes when we make classifiers for NLP phenomena, it makes sense to inspect the errors more thoroughly.
 # Where does the classifier make errors? What kind of errors? Find five sentences where at least one token is
@@ -875,13 +880,36 @@ macro_f = (0.9998+0.9084+0.9746+0.9220+0.9960+0.9935+0.9661+0.9662+0.9822+0.9261
 # Would you say that the predicted tag is wrong? Or is there a genuine ambiguity such that both answers are defendable?
 # Or is even the gold tag wrong?
 
+# tagger = ScikitConsecutivePosTagger(news_train)
+# gold_data = news_dev_test
+# i = 0
+# for sentence in gold_data:
+#     news = [sentence]
+#     check = (round(tagger.accuracy(news), 4))
+#     print(check)
+#     if check != 1.0:
+#         print("TAGGED SENT", "\n", "GOLD SENT", news)
+#     i += 1
+#
+# haha = tagger.tag_sents(gold_data[1])
+# unzipped_object = zip(*haha)
+# unzipped_list = list(unzipped_object)
 
-tagger = ScikitConsecutivePosTagger(train)
-gold_data = dev_test
+# print(unzipped_list)
 
 
 
 
+
+
+
+
+
+
+
+"""##############
+Exercise 8
+##############"""
 # ## Ex 8: Final testing (10 points)
 # ### Part a.
 # We have reached a stage where we will make no further adjustments to our tagger.
@@ -918,7 +946,9 @@ hobbies = brown.tagged_sents(categories="hobbies", tagset='universal')
 
 
 
-
+"""##############
+Exercise 9
+##############"""
 # ## Ex 9: Comparing to other taggers (10 points)
 
 # ### Part a.
@@ -952,13 +982,13 @@ hobbies = brown.tagged_sents(categories="hobbies", tagset='universal')
 # How does it perform compared to your best tagger? Did you beat it? What about speed?
 
 
-per_tagger = nltk.PerceptronTagger(load=False)
+# per_tagger = nltk.PerceptronTagger(load=False)
 # per_tagger.train(news_train)
 # print("perceptron tagger on news", round(per_tagger.accuracy(news_test), 4))
 # ## result: 0.9638
 
-per_tagger.train(train)
-print("perceptron tagger on big data set", round(per_tagger.accuracy(test), 4))
+# per_tagger.train(train)
+# print("perceptron tagger on big data set", round(per_tagger.accuracy(test), 4))
 # ## result: 0.9793
 # ## speed: 3:54 mins
 
