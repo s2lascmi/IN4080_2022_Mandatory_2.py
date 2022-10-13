@@ -907,20 +907,20 @@ def prepare_table(gold_sent, pred_sent):
     return data
 
 
-# tagger = ScikitConsecutivePosTagger(news_train)
-# gold_data = news_dev_test
-# i = 0
-# col_names = ["TOKEN", "PRED", "GOLD"]
-# for sentence in gold_data:
-#     news = [sentence]
-#     check = (round(tagger.accuracy(news), 4))
-#     if check != 1.0:
-#         prediction = tagger.tag_sents(gold_data[i])
-#         unzipped_object = zip(*prediction)
-#         unzipped_list = list(unzipped_object)
-#         data = prepare_table(gold_data[i], unzipped_list[0])
-#         # print((tabulate(data, headers=col_names)), "\n")
-#     i += 1
+tagger = ScikitConsecutivePosTagger(train)
+gold_data = dev_test
+i = 0
+col_names = ["TOKEN", "PRED", "GOLD"]
+for sentence in gold_data:
+    news = [sentence]
+    check = (round(tagger.accuracy(news), 4))
+    if check != 1.0:
+        prediction = tagger.tag_sents(gold_data[i])
+        unzipped_object = zip(*prediction)
+        unzipped_list = list(unzipped_object)
+        data = prepare_table(gold_data[i], unzipped_list[0])
+        # print((tabulate(data, headers=col_names)), "\n")
+    i += 1
 
 
 
