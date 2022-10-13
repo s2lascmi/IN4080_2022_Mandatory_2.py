@@ -880,22 +880,73 @@ Exercise 7
 # Would you say that the predicted tag is wrong? Or is there a genuine ambiguity such that both answers are defendable?
 # Or is even the gold tag wrong?
 
+import itertools
+from tabulate import tabulate
+
+def prepare_table(gold_sent, pred_sent):
+    data_pred = []
+    list1 = []
+    data_gold = []
+    list2 = []
+    for tuple in pred_sent:
+        (word, pred_tag) = tuple
+        list1.append(word)
+        list1.append(pred_tag)
+        data_pred.append(list1)
+        list1 = []
+
+    for tuple in gold_sent:
+        (word, gold_tag) = tuple
+        list2.append(gold_tag)
+        data_gold.append(list2)
+        list2 = []
+
+    data = [list(itertools.chain(*i))
+          for i in zip(data_pred, data_gold)]
+
+    return data
+
+
 # tagger = ScikitConsecutivePosTagger(news_train)
 # gold_data = news_dev_test
 # i = 0
+# col_names = ["TOKEN", "PRED", "GOLD"]
 # for sentence in gold_data:
-#     news = [sentence]
-#     check = (round(tagger.accuracy(news), 4))
-#     print(check)
-#     if check != 1.0:
-#         print("TAGGED SENT", "\n", "GOLD SENT", news)
-#     i += 1
-#
-# haha = tagger.tag_sents(gold_data[1])
-# unzipped_object = zip(*haha)
-# unzipped_list = list(unzipped_object)
+#     while i < 5:
+#         news = [sentence]
+#         check = (round(tagger.accuracy(news), 4))
+#         if check != 1.0:
+#             prediction = tagger.tag_sents(gold_data[i])
+#             unzipped_object = zip(*prediction)
+#             unzipped_list = list(unzipped_object)
+#             data = prepare_table(gold_data[i], unzipped_list[0])
+#             # print((tabulate(data, headers=col_names)), "\n")
+#         i += 1
 
-# print(unzipped_list)
+
+# Example output (one of five sentences)
+# TOKEN           PRED    GOLD
+# --------------  ------  ------
+# ``              .       .
+# It              PRON    PRON
+# has             VERB    VERB
+# become          VERB    VERB
+# our             DET     DET
+# responsibility  NOUN    NOUN
+# and             CONJ    CONJ
+# I               PRON    PRON
+# hope            NOUN    VERB
+# that            DET     ADP
+# the             DET     DET
+# Citizens        NOUN    NOUN
+# Group           NOUN    NOUN
+# will            VERB    VERB
+# spearhead       ADJ     VERB
+# the             DET     DET
+# movement        NOUN    NOUN
+# ''              .       .
+# .               .       .
+
 
 
 
