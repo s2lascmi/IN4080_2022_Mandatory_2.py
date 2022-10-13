@@ -912,19 +912,19 @@ def prepare_table(gold_sent, pred_sent):
 # i = 0
 # col_names = ["TOKEN", "PRED", "GOLD"]
 # for sentence in gold_data:
-#     while i < 5:
-#         news = [sentence]
-#         check = (round(tagger.accuracy(news), 4))
-#         if check != 1.0:
-#             prediction = tagger.tag_sents(gold_data[i])
-#             unzipped_object = zip(*prediction)
-#             unzipped_list = list(unzipped_object)
-#             data = prepare_table(gold_data[i], unzipped_list[0])
-#             # print((tabulate(data, headers=col_names)), "\n")
-#         i += 1
+#     news = [sentence]
+#     check = (round(tagger.accuracy(news), 4))
+#     if check != 1.0:
+#         prediction = tagger.tag_sents(gold_data[i])
+#         unzipped_object = zip(*prediction)
+#         unzipped_list = list(unzipped_object)
+#         data = prepare_table(gold_data[i], unzipped_list[0])
+#         # print((tabulate(data, headers=col_names)), "\n")
+#     i += 1
 
 
-# Example output (one of five sentences)
+
+# Example output
 # TOKEN           PRED    GOLD
 # --------------  ------  ------
 # ``              .       .
